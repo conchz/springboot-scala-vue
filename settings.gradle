@@ -1,0 +1,4 @@
+rootProject.name = 'springboot-scala-vue'
+
+include 'commons', 'server', 'ui'
+

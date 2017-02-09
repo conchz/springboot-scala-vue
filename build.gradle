@@ -1,0 +1,86 @@
+buildscript {
+    ext {
+        springbootVersion = '1.4.3.RELEASE'
+        scalaVersion = '2.11.8'
+        scalaLibVersion = '2.11'
+        jacksonVersion = '2.8.5'
+    }
+    repositories {
+        jcenter()
+        mavenCentral()
+        maven {
+            url 'https://plugins.gradle.org/m2/'
+        }
+    }
+    dependencies {
+        classpath "org.springframework.boot:spring-boot-gradle-plugin:$springbootVersion"
+        classpath 'com.moowork.gradle:gradle-node-plugin:1.1.1'
+    }
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.11'
+}
+
+subprojects {
+    apply plugin: 'scala'
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        jcenter()
+    }
+
+    group = 'com.github.lavenderx.springbootscala'
+    version = '1.0.0'
+
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+
+    compileJava {
+        options.encoding = 'UTF-8'
+        options.compilerArgs << "-Xlint:deprecation" << "-Xlint:-options"
+    }
+
+    dependencies {
+        compile "org.scala-lang:scala-library:$scalaVersion"
+        compile "org.scala-lang:scala-reflect:$scalaVersion"
+        compile "org.scala-lang.modules:scala-java8-compat_$scalaLibVersion:0.8.0"
+        compile "com.fasterxml.jackson.module:jackson-module-scala_$scalaLibVersion:$jacksonVersion"
+        compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion"
+        compile "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:$jacksonVersion"
+    }
+
+    // 这里需要重新设置Scala和Java源码的搜索路径，把Java源码路径移动到Scala的搜索路径来。不然编译时会遇到Java代码找不到Scala代码符号问题。
+    sourceSets {
+        main {
+            scala {
+                srcDirs = ['src/main/scala', 'src/main/java']
+            }
+            java {
+                srcDirs = []
+            }
+        }
+        test {
+            scala {
+                srcDirs = ['src/test/scala', 'src/test/java']
+            }
+            java {
+                srcDirs = []
+            }
+        }
+    }
+
+    tasks.withType(ScalaCompile) {
+        scalaCompileOptions.additionalParameters = ["-feature", "-language:implicitConversions", "-language:reflectiveCalls"]
+        ScalaCompileOptions.metaClass.fork = true
+        scalaCompileOptions.with {
+            force = true
+        }
+    }
+
+    jar {
+        manifest.attributes provider: 'gradle'
+    }
+
+}
